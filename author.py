@@ -15,9 +15,10 @@ title_link_re = re.compile(r"http\:\/\/ssrn\.com\/abstract\=(\d+)")
 
 
 def main():
+    author_name = "Anupam Chander"
 
     output_rows = []
-    output_json = []
+    output_json = {'papers': [], 'author_name': author_name}
 
     soup = BeautifulSoup(
         open(sample_dir + os.sep + sample_filename),
@@ -46,7 +47,7 @@ def main():
             print("\"%s\" at %s" % (paper_title, paper_link))
 
             output_rows.append([paper_title, paper_link])
-            output_json.append({'title': paper_title, 'link': paper_link})
+            output_json['papers'].append({'title': paper_title, 'link': paper_link})
 
     print("Writing CSV output...")
     output_f = open(sample_output_filename, 'w')  # newline='')
