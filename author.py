@@ -9,6 +9,7 @@ sample_dir = "sample-data"
 sample_filename = "Author Page for Anupam Chander _ SSRN.html"
 sample_output_filename = "chander.csv"
 sample_output_filename_json = "chander.json"
+sample_output_filename_tipue = "tipue.json"
 
 paper_row_re = re.compile(r"row\_(\d)+")
 title_link_re = re.compile(r"http\:\/\/ssrn\.com\/abstract\=(\d+)")
@@ -19,6 +20,7 @@ def main():
 
     output_rows = []
     output_json = {'papers': [], 'author_name': author_name}
+    output_tipue = {'pages': []}
 
     soup = BeautifulSoup(
         open(sample_dir + os.sep + sample_filename),
@@ -51,6 +53,7 @@ def main():
 
             output_rows.append([paper_title, paper_link])
             output_json['papers'].append({'title': paper_title, 'link': paper_link})
+            output_tipue['pages'].append({'title': paper_title, 'tags': 'SSRN', 'url': 'paper.html', 'text': 'Placeholder text. Replace with abstract.'})
 
     print("Writing CSV output...")
     output_f = open(sample_output_filename, 'w')  # newline='')
@@ -58,10 +61,17 @@ def main():
     writer.writerows(output_rows)
     output_f.close()
     print("Done.")
+
     print("Writing JSON output...")
     json_f = open(sample_output_filename_json, 'w')
     json_f.write(json.dumps(output_json))
     json_f.close()
+
+    print("Writing JSON for Tipue Search...")
+    tipue_f = open(sample_output_filename_tipue, 'w')
+    tipue_f.write(json.dumps(output_tipue))
+    tipue_f.close()
+
     print("Done.")
 
 if __name__ == '__main__':
