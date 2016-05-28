@@ -1,1 +1,1 @@
-from wayback3 import availability
+from .wayback3 import availability
