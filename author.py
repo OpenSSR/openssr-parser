@@ -4,6 +4,8 @@ import os
 import sys
 import re
 from bs4 import BeautifulSoup
+import wayback3
+from ssrn_urls import *
 
 sample_dir = "sample-data"
 # sample_filename = "Author Page for Anupam Chander _ SSRN.html"
@@ -28,18 +30,16 @@ def get_author_name(soup):
     print("Found author name: %s" % author_name)
     return author_name
 
-def main():
-    # author_name = "Anupam Chander"
-    soup = BeautifulSoup(
-        open(sample_dir + os.sep + sample_filename),
-        "html.parser")
+def extract_paper_id(paper_link):
+    # TODO: Make it work on long links, too
+    try:
+        return title_link_re.search(paper_link).groups()[0]
+    except:
+        print("Exception during extract_paper_id()! Called on link: %s" % paper_link)
+        return None
 
-    author_name = get_author_name(soup)
-
-    # Set up output vars
-    output_rows = []
-    output_json = {'papers': [], 'author_name': author_name}
-    output_tipue = {'pages': []}
+def get_papers(soup):
+    papers = []
 
     # Find the table: it's a <table> with id="listItems"
     list_table = soup.find_all(id="listItems")
@@ -51,8 +51,6 @@ def main():
     # Get titles:
     # <a class="textlink" href="http://ssrn.com/abstract=562301" target="_blank">The Romance of the Public Domain</a>
     for row in paper_rows:
-        # row_a_tag = row.find_all(class_="textlink")[0]
-        # for row_a_tag in row.find_all(class_="textlink", target="_blank"):
         for row_a_tag in row.find_all(
                 class_="textlink",
                 target="_blank",
@@ -63,17 +61,48 @@ def main():
             except:
                 paper_title = ""
 
-            # print(paper_title)
-            # print(str(paper_title))
-
-            # print(row_a_tag.attrs)
             paper_link = row_a_tag.attrs['href']  # .encode('utf-8')
             print("\"%s\" at %s" % (paper_title, paper_link))
 
-            output_rows.append([paper_title, paper_link])
-            output_json['papers'].append({'title': paper_title, 'link': paper_link})
-            output_tipue['pages'].append({'title': paper_title, 'tags': 'SSRN', 'url': 'paper.html', 'text': 'Placeholder text. Replace with abstract.'})
+            paper_id = extract_paper_id(paper_link)
 
+            papers.append({
+                'title': paper_title,
+                'link': paper_link,
+                'id': paper_id
+            })
+
+    return papers
+
+
+def main():
+    soup = BeautifulSoup(
+        open(sample_dir + os.sep + sample_filename),
+        "html.parser")
+
+    author_name = get_author_name(soup)
+
+    papers = get_papers(soup)
+
+    for paper in papers[:3]:
+        paper_long_url = SSRN_ABSTRACT_URL_LONG % paper['id']
+        wb = wayback3.crawl(paper_long_url)
+        open(
+            "sample-data/wb-abstract-%s.html" % paper['id'],
+            "wb").write(wb['content'])
+
+    # Set up output vars
+    output_rows = []
+    output_json = {'papers': [], 'author_name': author_name}
+    output_tipue = {'pages': []}
+
+    # Build outputs
+    for paper in papers:
+        output_rows.append([paper['title'], paper['link']])
+        output_json['papers'].append(paper)
+        output_tipue['pages'].append({'title': paper['title'], 'tags': 'SSRN', 'url': 'paper.html', 'text': 'Placeholder text. Replace with abstract.'})
+
+    # Write output files
     print("Writing CSV output...")
     output_f = open(sample_output_filename, 'w')  # newline='')
     writer = csv.writer(output_f)
