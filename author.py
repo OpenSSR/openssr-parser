@@ -41,9 +41,12 @@ def main():
                 target="_blank",
                 href=title_link_re):
 
-            paper_title = row_a_tag.string
+            try:
+                paper_title = row_a_tag.string.encode('utf-8')
+            except:
+                paper_title = ""
             # print(row_a_tag.attrs)
-            paper_link = row_a_tag.attrs['href']
+            paper_link = row_a_tag.attrs['href'].encode('utf-8')
             print("\"%s\" at %s" % (paper_title, paper_link))
 
             output_rows.append([paper_title, paper_link])
