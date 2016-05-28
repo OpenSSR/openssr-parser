@@ -8,6 +8,7 @@ import requests
 
 FORMAT_STRING = "%Y%m%d%H%M%S"  # Looks like "20130919044612"
 AVAILABILITY_URL = "http://archive.org/wayback/available?url=%s"
+WAYBACK_URL_ROOT = "http://web.archive.org"
 
 
 def availability(url):
