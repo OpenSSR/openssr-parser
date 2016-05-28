@@ -17,6 +17,7 @@ sample_output_filename_tipue = "tipue.json"
 paper_row_re = re.compile(r"row\_(\d)+")
 title_link_re = re.compile(r"http\:\/\/ssrn\.com\/abstract\=(\d+)")
 
+ABSTRACT_PLACEHOLDER = "There is no abstract yet. Move along."
 
 def get_author_name(soup):
     """
@@ -24,11 +25,26 @@ def get_author_name(soup):
     """
     author_name = None
     author_span = soup.find_all(class_="authorName")[0]
-    print(author_span)
-    print(author_span.children)
+    # print(author_span)
+    # print(author_span.children)
     author_name = author_span.contents[0].string
     print("Found author name: %s" % author_name)
     return author_name
+
+def extract_abstract_text(abstract_html):
+    soup = BeautifulSoup(abstract_html, "html.parser")
+    try:
+        abstract_div = soup.find_all(id="abstract")[0]
+    except:
+        print("FAILED to extract abstract!")
+        return None
+    else:
+        # print("extract_abstract_text():\n%s" % abstract_div)
+        # print()
+        stuff = "\n".join(abstract_div.stripped_strings)
+        print(stuff)
+        return stuff
+
 
 def extract_paper_id(paper_link):
     # TODO: Make it work on long links, too
@@ -62,14 +78,15 @@ def get_papers(soup):
                 paper_title = ""
 
             paper_link = row_a_tag.attrs['href']  # .encode('utf-8')
-            print("\"%s\" at %s" % (paper_title, paper_link))
+            # print("\"%s\" at %s" % (paper_title, paper_link))
 
             paper_id = extract_paper_id(paper_link)
 
             papers.append({
                 'title': paper_title,
                 'link': paper_link,
-                'id': paper_id
+                'id': paper_id,
+                'abstract': ABSTRACT_PLACEHOLDER
             })
 
     return papers
@@ -83,13 +100,20 @@ def main():
     author_name = get_author_name(soup)
 
     papers = get_papers(soup)
+    abstracts = {}
 
-    for paper in papers[:3]:
+    for paper in papers:  # [:1]:
         paper_long_url = SSRN_ABSTRACT_URL_LONG % paper['id']
         wb = wayback3.crawl(paper_long_url)
-        open(
+        if wb:
+            open(
             "sample-data/wb-abstract-%s.html" % paper['id'],
-            "wb").write(wb['content'])
+            "wb").write(wb['content'])  # Save HTML to disk
+            abstract = extract_abstract_text(wb['content'])
+            abstracts[paper['id']] = abstract
+        else:
+            # Wayback crawl failed?
+            print("ERROR with crawl: %s" % paper_long_url)
 
     # Set up output vars
     output_rows = []
@@ -98,9 +122,11 @@ def main():
 
     # Build outputs
     for paper in papers:
+        if paper['id'] in abstracts:
+            paper['abstract'] = abstracts[paper['id']]
         output_rows.append([paper['title'], paper['link']])
         output_json['papers'].append(paper)
-        output_tipue['pages'].append({'title': paper['title'], 'tags': 'SSRN', 'url': 'paper.html', 'text': 'Placeholder text. Replace with abstract.'})
+        output_tipue['pages'].append({'title': paper['title'], 'tags': 'SSRN', 'url': 'paper.html', 'text': paper['abstract']})
 
     # Write output files
     print("Writing CSV output...")
