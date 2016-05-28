@@ -26,3 +26,13 @@ def availability(url):
         timestamp = datetime.datetime.strptime(timestamp, FORMAT_STRING)
         url = closest.get('url')
     return {'verbatim': closest, 'url': url, 'timestamp': timestamp}
+
+def crawl(url):
+    avail = availability(url)
+    if avail:
+        response = requests.get(avail['url'])
+        return {
+            'timestamp': avail['timestamp'],
+            'wayback_url': avail['url'],
+            'content': response.content,
+        }
