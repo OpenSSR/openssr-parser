@@ -6,7 +6,8 @@ import re
 from bs4 import BeautifulSoup
 
 sample_dir = "sample-data"
-sample_filename = "Author Page for Anupam Chander _ SSRN.html"
+# sample_filename = "Author Page for Anupam Chander _ SSRN.html"
+sample_filename = "wb-author-275458.html"  # Copy from Wayback Machine
 sample_output_filename = "chander.csv"
 sample_output_filename_json = "chander.json"
 sample_output_filename_tipue = "tipue.json"
@@ -15,16 +16,30 @@ paper_row_re = re.compile(r"row\_(\d)+")
 title_link_re = re.compile(r"http\:\/\/ssrn\.com\/abstract\=(\d+)")
 
 
+def get_author_name(soup):
+    """
+    Looking for: <span class="authorName"><h1>Anupam Chander</h1></span>
+    """
+    author_name = None
+    author_span = soup.find_all(class_="authorName")[0]
+    print(author_span)
+    print(author_span.children)
+    author_name = author_span.contents[0].string
+    print("Found author name: %s" % author_name)
+    return author_name
+
 def main():
-    author_name = "Anupam Chander"
-
-    output_rows = []
-    output_json = {'papers': [], 'author_name': author_name}
-    output_tipue = {'pages': []}
-
+    # author_name = "Anupam Chander"
     soup = BeautifulSoup(
         open(sample_dir + os.sep + sample_filename),
         "html.parser")
+
+    author_name = get_author_name(soup)
+
+    # Set up output vars
+    output_rows = []
+    output_json = {'papers': [], 'author_name': author_name}
+    output_tipue = {'pages': []}
 
     # Find the table: it's a <table> with id="listItems"
     list_table = soup.find_all(id="listItems")
@@ -44,11 +59,15 @@ def main():
                 href=title_link_re):
 
             try:
-                paper_title = row_a_tag.string.encode('utf-8')
+                paper_title = row_a_tag.string  # .encode('utf-8')
             except:
                 paper_title = ""
+
+            # print(paper_title)
+            # print(str(paper_title))
+
             # print(row_a_tag.attrs)
-            paper_link = row_a_tag.attrs['href'].encode('utf-8')
+            paper_link = row_a_tag.attrs['href']  # .encode('utf-8')
             print("\"%s\" at %s" % (paper_title, paper_link))
 
             output_rows.append([paper_title, paper_link])
