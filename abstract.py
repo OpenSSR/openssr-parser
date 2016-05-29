@@ -5,6 +5,7 @@ Example: http://web.archive.org/web/20160302003803/http://papers.ssrn.com/sol3/p
 
 # TODO:
 # * Capture and save download timestamp (for WB)
+# * Extract abstract ID
 
 import sys
 import re
@@ -114,6 +115,7 @@ def main():
     d = {
         'title': title,
         'abstract': abstract,
+        'abstract_id': None,
         'authors': authors,
         'stats': stats
         }
