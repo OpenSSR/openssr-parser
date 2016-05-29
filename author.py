@@ -19,6 +19,7 @@ title_link_re = re.compile(r"http\:\/\/ssrn\.com\/abstract\=(\d+)")
 
 ABSTRACT_PLACEHOLDER = "There is no abstract yet. Move along."
 
+
 def get_author_name(soup):
     """
     Looking for: <span class="authorName"><h1>Anupam Chander</h1></span>
@@ -30,6 +31,7 @@ def get_author_name(soup):
     author_name = author_span.contents[0].string
     print("Found author name: %s" % author_name)
     return author_name
+
 
 def extract_abstract_text(abstract_html):
     soup = BeautifulSoup(abstract_html, "html.parser")
@@ -51,8 +53,10 @@ def extract_paper_id(paper_link):
     try:
         return title_link_re.search(paper_link).groups()[0]
     except:
-        print("Exception during extract_paper_id()! Called on link: %s" % paper_link)
+        print("Exception during extract_paper_id()! Called on link: %s" %
+            paper_link)
         return None
+
 
 def get_papers(soup):
     papers = []
@@ -107,8 +111,8 @@ def main():
         wb = wayback3.crawl(paper_long_url)
         if wb:
             open(
-            "sample-data/wb-abstract-%s.html" % paper['id'],
-            "wb").write(wb['content'])  # Save HTML to disk
+                "sample-data/wb-abstract-%s.html" % paper['id'],
+                "wb").write(wb['content'])  # Save HTML to disk
             abstract = extract_abstract_text(wb['content'])
             abstracts[paper['id']] = abstract
         else:
@@ -126,7 +130,11 @@ def main():
             paper['abstract'] = abstracts[paper['id']]
         output_rows.append([paper['title'], paper['link']])
         output_json['papers'].append(paper)
-        output_tipue['pages'].append({'title': paper['title'], 'tags': 'SSRN', 'url': 'paper.html', 'text': paper['abstract']})
+        output_tipue['pages'].append({
+            'title': paper['title'],
+            'tags': 'SSRN',
+            'url': 'paper.html',
+            'text': paper['abstract']})
 
     # Write output files
     print("Writing CSV output...")
