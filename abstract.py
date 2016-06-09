@@ -5,7 +5,6 @@ Example: http://web.archive.org/web/20160302003803/http://papers.ssrn.com/sol3/p
 
 # TODO:
 # * Capture and save download timestamp (for WB)
-# * Extract abstract ID
 
 import sys
 import re
@@ -42,10 +41,7 @@ def extract_abstract_text(soup):
         print("FAILED to extract abstract!")
         return None
     else:
-        # print("extract_abstract_text():\n%s" % abstract_div)
-        # print()
         stuff = "\n".join(abstract_div.stripped_strings)
-        # print(stuff)
         return stuff
 
 
@@ -90,22 +86,11 @@ def extract_stats(soup):
     # print(container)
 
     labels = container.find_all(class_="statisticsText")
-    # num_labels = len(labels)
-    # print("* %d labels" % num_labels)
-    # print(labels)
     # Only gets first 3 b/c citations are even crazier!
 
     spans = container.find_all(class_="statNumber")
     # Yay, gets all 5.
     numbers = [decrazify(span.string) for span in spans]
-    # num_numbers = len(numbers)
-    # print("* %d numbers" % num_numbers)
-    # print("---")
-    # print(labels)
-    # print(spans)
-    # print([span.string for span in spans])
-    # print(numbers)
-    # print("---")
 
     # Going to always have at least these 2 items:
     ret = {
@@ -113,22 +98,13 @@ def extract_stats(soup):
         'downloads': numbers[1]
     }
 
-    # Add in optional ones:
+    # Add in optional ones if we got them:
     if len(numbers) >= 3:
         ret['download_rank'] = numbers[2]
     if len(numbers) >= 4:
         ret['forward_citations'] = numbers[3]
     if len(numbers) >= 5:
         ret['footnotes'] = numbers[4]
-
-    # print("Returning:")
-    # pprint(ret)
-
-    # return {
-    #     'download_rank': numbers[2],
-    #     'forward_citations': numbers[3],
-    #     'footnotes': numbers[4]
-    #     }
 
     return ret
 
