@@ -12,6 +12,7 @@ import re
 import json
 from bs4 import BeautifulSoup
 from pprint import pprint
+import ssrn_urls
 
 author_id_re = re.compile(r"AbsByAuth\.cfm\?per_id=(\d+)")
 
@@ -21,6 +22,16 @@ def extract_paper_title(soup):
     h1 = title_div.find_all('h1')[0]
     title = h1.string
     return title
+
+
+def extract_abstract_id(soup):
+    abstract_url_meta_tag = soup.find_all("meta", attrs={"name": "citation_abstract_html_url"})[0]
+    abs_url = abstract_url_meta_tag.attrs.get('content')
+    if abs_url is not None:
+        abs_id = ssrn_urls.ID_EXTRACTOR_SHORT_RE.search(abs_url).groups()[1]
+        return abs_id
+    else:
+        raise Exception("Didn't get an abstract url from a <meta> tag :(")
 
 
 def extract_abstract_text(soup):
@@ -77,22 +88,48 @@ def extract_stats(soup):
     container = soup.find_all('div', class_="statistics")[0]
     # print(container)
 
-    # labels = container.find_all(class_="statisticsText")
+    labels = container.find_all(class_="statisticsText")
+    # num_labels = len(labels)
+    # print("* %d labels" % num_labels)
     # print(labels)
     # Only gets first 3 b/c citations are even crazier!
 
     spans = container.find_all(class_="statNumber")
     # Yay, gets all 5.
     numbers = [decrazify(span.string) for span in spans]
+    # num_numbers = len(numbers)
+    # print("* %d numbers" % num_numbers)
+    # print("---")
+    # print(labels)
+    # print(spans)
+    # print([span.string for span in spans])
     # print(numbers)
+    # print("---")
 
-    return {
+    # Going to always have at least these 2 items:
+    ret = {
         'abstract_views': numbers[0],
-        'downloads': numbers[1],
-        'download_rank': numbers[2],
-        'forward_citations': numbers[3],
-        'footnotes': numbers[4]
-        }
+        'downloads': numbers[1]
+    }
+
+    # Add in optional ones:
+    if len(numbers) >= 3:
+        ret['download_rank'] = numbers[2]
+    if len(numbers) >= 4:
+        ret['forward_citations'] = numbers[3]
+    if len(numbers) >= 5:
+        ret['footnotes'] = numbers[4]
+
+    # print("Returning:")
+    # pprint(ret)
+
+    # return {
+    #     'download_rank': numbers[2],
+    #     'forward_citations': numbers[3],
+    #     'footnotes': numbers[4]
+    #     }
+
+    return ret
 
 
 def main():
@@ -101,6 +138,7 @@ def main():
         "html.parser")
     title = extract_paper_title(soup)
     abstract = extract_abstract_text(soup)
+    abstract_id = extract_abstract_id(soup)
     authors = extract_authors(soup)
     stats = extract_stats(soup)
 
@@ -115,7 +153,7 @@ def main():
     d = {
         'title': title,
         'abstract': abstract,
-        'abstract_id': None,
+        'abstract_id': abstract_id,
         'authors': authors,
         'stats': stats
         }
