@@ -134,34 +134,35 @@ def extract_stats(soup):
 
 
 def main():
-    soup = BeautifulSoup(
-        open(sys.argv[1]),
-        "html.parser")
-    title = extract_paper_title(soup)
-    abstract = extract_abstract_text(soup)
-    abstract_id = extract_abstract_id(soup)
-    authors = extract_authors(soup)
-    stats = extract_stats(soup)
+    for filename in sys.argv[1:]:
+        soup = BeautifulSoup(
+            open(filename),
+            "html.parser")
+        title = extract_paper_title(soup)
+        abstract = extract_abstract_text(soup)
+        abstract_id = extract_abstract_id(soup)
+        authors = extract_authors(soup)
+        stats = extract_stats(soup)
 
-    print("Title: %s" % title)
-    print("Authors: %s" %
-          ["%s (%s)" % (author['author_name'], author['author_id']) for author in authors])
-    print("Stats:")
-    pprint(stats)
+        print("Title: %s" % title)
+        print("Authors: %s" %
+              ["%s (%s)" % (author['author_name'], author['author_id']) for author in authors])
+        print("Stats:")
+        pprint(stats)
 
-    print()
+        print()
 
-    d = {
-        'title': title,
-        'abstract': abstract,
-        'abstract_id': abstract_id,
-        'authors': authors,
-        'stats': stats
-        }
-    pprint(d)
+        d = {
+            'title': title,
+            'abstract': abstract,
+            'abstract_id': abstract_id,
+            'authors': authors,
+            'stats': stats
+            }
+        pprint(d)
 
-    f = open(OUTPUT_DIR + os.sep + "abstract-%s.json" % (abstract_id), "w")
-    json.dump(d, f, indent=2)
+        f = open(OUTPUT_DIR + os.sep + "abstract-%s.json" % (abstract_id), "w")
+        json.dump(d, f, indent=2)
 
 
 if __name__ == '__main__':
