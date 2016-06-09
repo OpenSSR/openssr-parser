@@ -10,12 +10,13 @@ Example: http://web.archive.org/web/20160302003803/http://papers.ssrn.com/sol3/p
 import sys
 import re
 import json
+import os
 from bs4 import BeautifulSoup
 from pprint import pprint
 import ssrn_urls
 
 author_id_re = re.compile(r"AbsByAuth\.cfm\?per_id=(\d+)")
-
+OUTPUT_DIR = "output"
 
 def extract_paper_title(soup):
     title_div = soup.find_all(id="abstractTitle")[0]
@@ -159,7 +160,7 @@ def main():
         }
     pprint(d)
 
-    f = open("abstract.json", "w")
+    f = open(OUTPUT_DIR + os.sep + "abstract-%s.json" % (abstract_id), "w")
     json.dump(d, f, indent=2)
 
 
